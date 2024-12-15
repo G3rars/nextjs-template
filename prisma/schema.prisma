@@ -1,0 +1,74 @@
+// Configuración del proveedor y cliente de Prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Modelo para usuarios
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @updatedAt @default(now())
+  updatedAt DateTime @default(now())
+}
+
+// Modelo para clientes
+model Customer {
+  id        Int        @id @default(autoincrement())
+  firstName String // Primer nombre
+  lastName  String // Apellido
+  phone     String? // Teléfono (opcional)
+  address   String? // Dirección (opcional)
+  province  String? // Provincia (opcional)
+  email     String     @unique // Correo único
+  imageUrl  String? // URL de la imagen (opcional)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+  purchases Purchase[] // Relación con las compras realizadas por el cliente
+}
+
+// Modelo para productos
+model Product {
+  id               Int            @id @default(autoincrement()) // ID autoincrementable
+  name             String // Nombre del producto
+  classification   String // Clasificación del producto
+  department       String // Departamento
+  format           String // Formato del producto
+  presentation     String // Presentación (como 500mg)
+  laboratory       String // Laboratorio que produce el producto
+  activeIngredient String // Ingrediente activo
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+  purchaseItems    PurchaseItem[] // Relación con los items en compras (muchos a muchos)
+
+}
+
+// Modelo para compras
+model Purchase {
+  id        Int            @id @default(autoincrement()) // ID autoincrementable
+  clientId  Int // Clave foránea que hace referencia al cliente
+  customer  Customer       @relation(fields: [clientId], references: [id]) // Relación con cliente
+  createdAt DateTime       @default(now()) // Fecha de creación de la compra
+  updatedAt DateTime @updatedAt @default(now())
+  items     PurchaseItem[] // Relación con los productos comprados (muchos a muchos)
+}
+
+// Modelo para los elementos de las compras (productos comprados)
+model PurchaseItem {
+  id         Int      @id @default(autoincrement()) // ID autoincrementable
+  purchaseId Int // Clave foránea de la compra
+  productId  Int // Clave foránea del producto
+  quantity   Int // Cantidad comprada
+  purchase   Purchase @relation(fields: [purchaseId], references: [id]) // Relación con la compra
+  product    Product  @relation(fields: [productId], references: [id]) // Relación con el producto
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+
+  @@unique([purchaseId, productId]) // Relación única entre compra y producto (no se pueden duplicar)
+}
